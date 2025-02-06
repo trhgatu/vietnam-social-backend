@@ -18,7 +18,6 @@ const startServer = async () => {
         await connectDatabase();
         app.use(cors({
             origin: process.env.CLIENT_ORIGIN,
-            credentials: true,
         }));
         app.use(bodyParser.urlencoded({ extended: false }));
         app.use(express.json());
