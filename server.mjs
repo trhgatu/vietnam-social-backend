@@ -17,7 +17,7 @@ const startServer = async () => {
     try {
         await connectDatabase();
         app.use(cors({
-            origin: process.env.CLIENT_ORIGIN,
+            origin: process.env.CLIENT_ORIGIN || process.env.CLIENT_PRODUCTION_ORIGIN,
             credentials: true
         }));
         app.use(bodyParser.urlencoded({ extended: false }));
