@@ -6,7 +6,7 @@ import cors from 'cors';
 import adminRoutes from './api/v1/routes/admin/index.route.js';
 import clientRouter from './api/v1/routes/client/index.route.js';
 import cookieParser from 'cookie-parser';
-import prefixAdmin  from './config/system.js';
+import prefixAdmin from './config/system.js';
 
 dotenv.config();
 
@@ -16,10 +16,19 @@ const port = process.env.PORT;
 const startServer = async () => {
     try {
         await connectDatabase();
-        app.use(cors({
-            origin: process.env.CLIENT_ORIGIN || process.env.CLIENT_PRODUCTION_ORIGIN,
-            credentials: true
-        }));
+        const corsOptions = {
+            credentials: true,
+            origin: (origin, callback) => {
+                const allowedOrigins = [process.env.CLIENT_ORIGIN, process.env.CLIENT_PRODUCTION_ORIGIN];
+                if (allowedOrigins.includes(origin) || !origin) {
+                    callback(null, true);
+                } else {
+                    callback(new Error('Not allowed by CORS'));
+                }
+            }
+        };
+
+        app.use(cors(corsOptions));
         app.use(bodyParser.urlencoded({ extended: false }));
         app.use(express.json());
         app.use(cookieParser());
