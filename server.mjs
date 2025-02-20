@@ -5,7 +5,7 @@ import bodyParser from "body-parser";
 import cors from 'cors';
 import clientRouter from './api/v1/routes/client/index.route.js';
 import cookieParser from 'cookie-parser';
-
+import { swaggerDocs, swaggerUi } from './config/swagger.js';
 dotenv.config();
 
 const app = express();
@@ -14,22 +14,28 @@ const port = process.env.PORT;
 const startServer = async () => {
     try {
         await connectDatabase();
+        app.use("/api-docs", cors(), swaggerUi.serve, swaggerUi.setup(swaggerDocs));
         const corsOptions = {
             credentials: true,
             origin: (origin, callback) => {
-                const allowedOrigins = [process.env.CLIENT_ORIGIN, process.env.CLIENT_PRODUCTION_ORIGIN];
-                if (allowedOrigins.includes(origin) || !origin) {
+                const allowedOrigins = [
+                    process.env.CLIENT_ORIGIN,
+                    process.env.CLIENT_PRODUCTION_ORIGIN,
+                ];
+                if(allowedOrigins.includes(origin) || !origin) {
                     callback(null, true);
                 } else {
                     callback(new Error('Not allowed by CORS'));
                 }
-            }
+            },
+            optionsSuccessStatus: 200,
         };
 
         app.use(cors(corsOptions));
         app.use(bodyParser.urlencoded({ extended: false }));
         app.use(express.json());
         app.use(cookieParser());
+
 
         clientRouter(app);
 
