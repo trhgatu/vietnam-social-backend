@@ -5,7 +5,6 @@ import bodyParser from "body-parser";
 import cors from 'cors';
 import clientRouter from './api/v1/routes/client/index.route.js';
 import cookieParser from 'cookie-parser';
-import { swaggerDocs, swaggerUi } from './config/swagger.js';
 dotenv.config();
 
 const app = express();
@@ -14,7 +13,6 @@ const port = process.env.PORT;
 const startServer = async () => {
     try {
         await connectDatabase();
-        app.use("/api-docs", cors(), swaggerUi.serve, swaggerUi.setup(swaggerDocs));
         const corsOptions = {
             credentials: true,
             origin: (origin, callback) => {
