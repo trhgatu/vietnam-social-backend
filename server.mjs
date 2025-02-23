@@ -1,10 +1,11 @@
 import express from 'express';
-import connectDatabase from './config/database.js';
+import { connectDatabase } from './config/database.js';
 import dotenv from 'dotenv';
 import bodyParser from "body-parser";
 import cors from 'cors';
 import clientRouter from './api/v1/routes/client/index.route.js';
 import cookieParser from 'cookie-parser';
+import { swaggerSpec, swaggerUi } from './config/swagger.js';
 dotenv.config();
 
 const app = express();
@@ -30,6 +31,7 @@ const startServer = async () => {
         };
 
         app.use(cors(corsOptions));
+        app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
         app.use(bodyParser.urlencoded({ extended: false }));
         app.use(express.json());
         app.use(cookieParser());

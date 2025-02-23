@@ -1,4 +1,4 @@
-import User from "../../models/user.model.js"
+import User from "../models/user.model.js"
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -39,8 +39,11 @@ const controller = {
                 message: "Đăng nhập thành công",
                 token,
                 user: {
+                    avatar: user.avatar,
                     email: user.email,
                     name: user.name,
+                    coverPhoto: user.coverPhoto,
+                    nickname: user.nickname,
                 },
             });
         } catch (error) {

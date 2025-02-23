@@ -1,23 +1,64 @@
-import mongoose from "mongoose";
-import slug from "mongoose-slug-updater";
-
-mongoose.plugin(slug);
+import { mongoose } from "../../../config/database.js";
+import { v4 as uuidv4 } from 'uuid';
 
 const postSchema = new mongoose.Schema(
     {
-        title: { type: String, required: true },
-        slug: { type: String, slug: "title", unique: true },
-        content: { type: String, required: true },
-        excerpt: { type: String },
-        thumbnail: { type: String },
-        tags: [{ type: String }],
-        category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
-        status: { type: String, enum: ["draft", "published"], default: "draft" },
-        authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-        views: { type: Number, default: 0 },
-        likes: { type: Number, default: 0 },
-        readingTime: { type: String },
-        isFeatured: { type: Boolean, default: false },
+        id: {
+            type: String,
+            default: uuidv4,
+            unique: true,
+        },
+        authorId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+        content: {
+            type: String,
+            required: true
+        },
+        media: [
+            {
+                type: String
+            }
+        ],
+        tags: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User"
+            }
+        ],
+        reactions: [
+            {
+                type: mongoose.Schema.Types.ObjectId, ref: "Reaction"
+            }
+        ],
+        comments: [
+            {
+                type: mongoose.Schema.Types.ObjectId, ref: "Comment"
+            }
+        ],
+        shares: [
+            {
+                type: mongoose.Schema.Types.ObjectId, ref: "User"
+            }
+        ],
+        status: {
+            type: String,
+            enum: [
+                "public", "friends", "private"
+            ],
+            default: "public"
+        },
+        location: {
+            type: String
+        },
+        feeling: {
+            type: String
+        },
+        isDel: {
+            type: Boolean
+        }
     },
     { timestamps: true }
 );

@@ -12,6 +12,15 @@ const userSchema = new mongoose.Schema({
     },
     role : {
         type: String
+    },
+    avatar: {
+        type: String
+    },
+    coverPhoto: {
+        type: String
+    },
+    nickname: {
+        type: String,
     }
 
 })
