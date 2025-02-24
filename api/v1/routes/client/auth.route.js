@@ -36,5 +36,6 @@ const router = express.Router();
  *         description: Sai email hoặc mật khẩu
  */
 router.post('/login', controller.login);
-
+router.post('/logout', controller.logout);
+router.get('/me', controller.me);
 export default router;
