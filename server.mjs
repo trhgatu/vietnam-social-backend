@@ -15,21 +15,12 @@ const startServer = async () => {
     try {
         await connectDatabase();
         const corsOptions = {
+            origin: [
+                "http://localhost:3000",
+                "https://vietnam-social-network.vercel.app"
+            ],
             credentials: true,
-            origin: (origin, callback) => {
-                const allowedOrigins = [
-                    process.env.CLIENT_ORIGIN,
-                    process.env.CLIENT_PRODUCTION_ORIGIN,
-                ];
-                if(allowedOrigins.includes(origin) || !origin) {
-                    callback(null, true);
-                } else {
-                    callback(new Error('Not allowed by CORS'));
-                }
-            },
-            optionsSuccessStatus: 200,
         };
-
         app.use(cors(corsOptions));
         app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
         app.use(bodyParser.urlencoded({ extended: false }));
