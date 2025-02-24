@@ -20,6 +20,7 @@ const startServer = async () => {
                 "https://vietnam-social-network.vercel.app"
             ],
             credentials: true,
+            allowedHeaders: ["Content-Type", "Authorization"],
         };
         app.use(cors(corsOptions));
         app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
