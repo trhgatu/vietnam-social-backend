@@ -57,7 +57,7 @@ const controller = {
     /* [POST] api/v1/auth/logout */
     logout: async (req, res) => {
         try {
-            res.clearCookie("sessionToken"); // Xóa cookie chứa token
+            res.clearCookie("sessionToken");
             return res.status(200).json({
                 success: true,
                 message: "Đăng xuất thành công",
