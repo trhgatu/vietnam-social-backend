@@ -1,6 +1,6 @@
 import express from 'express';
 import controller from '../../controllers/post.controller.js';
-import { verifyToken } from '../../middlewares/auth.middleware.js';
+import { authMiddleware } from '../../middlewares/auth.middleware.js';
 const router = express.Router();
 
 /**
@@ -26,6 +26,6 @@ const router = express.Router();
  *                     type: string
  */
 router.get('/', controller.index);
-router.post('/create', controller.create)
+router.post('/create', authMiddleware, controller.create)
 
 export default router;

@@ -11,7 +11,7 @@ const postSchema = new mongoose.Schema(
         authorId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true
+            required: false
         },
         content: {
             type: String,
@@ -57,7 +57,8 @@ const postSchema = new mongoose.Schema(
             type: String
         },
         isDel: {
-            type: Boolean
+            type: Boolean,
+            default: false
         }
     },
     { timestamps: true }

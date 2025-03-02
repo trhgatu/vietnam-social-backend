@@ -1,4 +1,5 @@
 import Post from "../models/post.model.js";
+import User from "../models/user.model.js";
 import paginate from "../helpers/paginate.js";
 import { getGenericFields } from "../utils/generic-fields.js";
 
@@ -18,14 +19,15 @@ const controller = {
     /* [POST] api/v1/posts/create */
     create: async (req, res) => {
         try {
-            const { authorId, content, media, tags, status, location, feeling } = req.body;
-            if(!authorId || !content) {
-                return res.status(400).json({ message: "Thiếu thông tin bắt buộc." });
+            const { content, media, tags, status, location, feeling } = req.body;
+
+            if(!req.user || !req.user.id) {
+                return res.status(401).json({ message: "Không có quyền thực hiện hành động này." });
             }
 
             const newPost = new Post({
                 ...getGenericFields(),
-                authorId,
+                authorId: req.user.id,
                 content,
                 media: media || [],
                 tags: tags || [],
@@ -35,7 +37,11 @@ const controller = {
             });
 
             const savedPost = await newPost.save();
-            res.status(201).json(savedPost);
+            res.status(201).json({
+                success: true,
+                message: "Đăng bài viết thành công",
+                savedPost
+            });
         } catch(error) {
             console.error("Lỗi khi tạo bài viết:", error);
             res.status(500).json({ message: "Lỗi khi tạo bài viết", error: error.message });
