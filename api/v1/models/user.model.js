@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String
     },
-    role : {
+    role: {
         type: String
     },
     avatar: {
@@ -27,6 +27,14 @@ const userSchema = new mongoose.Schema({
     },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    favoriteSong: {
+        trackId: String,
+        title: String,
+        artist: String,
+        album: String,
+        imageUrl: String,
+        spotifyUrl: String,
+    },
 
 })
 const User = mongoose.model('User', userSchema, 'users')

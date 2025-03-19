@@ -1,5 +1,5 @@
 import User from "../models/user.model.js";
-
+import { getTrackInfo } from "../services/spotify/spotifyService.js";
 const controller = {
     /* [GET] api/v1/users/:username */
     getUserByUsername: async (req, res) => {
@@ -29,8 +29,50 @@ const controller = {
         } catch(error) {
             res.status(500).json({ message: "Lỗi khi tạo users", error });
         }
-    }
+    },
+    updateFavoriteSong: async (req, res) => {
+        try {
+            const { userId } = req.params;
+            const { trackId } = req.body;
 
+            const track = await getTrackInfo(trackId);
+            if(!track) {
+                return res.status(404).json({ message: "Track not found" });
+            }
+            const updatedUser = await User.findByIdAndUpdate(
+                userId,
+                {
+                    favoriteSong: {
+                        trackId,
+                        title: track.name,
+                        artist: track.artists[0].name,
+                        album: track.album.name,
+                        imageUrl: track.album.images[0].url,
+                        spotifyUrl: track.external_urls.spotify,
+                    },
+                },
+                { new: true }
+            );
+
+            res.json(updatedUser);
+        } catch(error) {
+            res.status(500).json({ message: "Error updating favorite song", error });
+        }
+    },
+    getFavoriteSong: async (req, res) => {
+        try {
+            const { userId } = req.params;
+            const user = await User.findById(userId).select("favoriteSong");
+
+            if(!user || !user.favoriteSong) {
+                return res.status(404).json({ message: "No favorite song found" });
+            }
+
+            res.json(user.favoriteSong);
+        } catch(error) {
+            res.status(500).json({ message: "Error fetching favorite song" });
+        }
+    }
 };
 
 export default controller;
