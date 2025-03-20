@@ -1,21 +1,20 @@
 import User from "../models/user.model.js";
 import { getTrackInfo } from "../services/spotify/spotifyService.js";
+import asyncHandler from "../middlewares/async.js";
+
 const controller = {
     /* [GET] api/v1/users/:username */
-    getUserByUsername: async (req, res) => {
-        try {
-            const { username } = req.params;
-            const user = await User.findOne({ username }).select("-password");
+    getUserByUsername: asyncHandler(async (req, res, next) => {
+        const { username } = req.params;
+        const user = await User.findOne({ username }).select("-password");
 
-            if(!user) {
-                return res.status(404).json({ message: "Không tìm thấy người dùng" });
-            }
-
-            res.status(200).json(user);
-        } catch(error) {
-            res.status(500).json({ message: "Lỗi khi lấy thông tin user", error });
+        if (!user) {
+            return next(new ErrorResponse("Không tìm thấy người dùng", 404));
         }
-    },
+
+        res.status(200).json(user);
+    }),
+
     /* [POST] api/v1/users/bulk-create */
     createUsers: async (req, res) => {
         try {

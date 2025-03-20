@@ -1,97 +1,122 @@
 import User from "../models/user.model.js";
+import FriendRequest from "../models/friendRequest.model.js"
+import asyncHandler from "../middlewares/async.js";
+import ErrorResponse from "../utils/errorResponse.js";
 
 const controller = {
-    getFriends: async (req, res) => {
-        try {
-            const { username } = req.params;
-            const user = await User.findOne({ username }).populate("friends");
-            if(!user) {
-                return res.status(404).json({ message: "Người dùng không tồn tại" });
-            }
+    index: asyncHandler(async (req, res, next) => {
+        const { username } = req.params;
 
-            res.status(200).json({ friends: user.friends });
-        } catch(error) {
-            res.status(500).json({ message: "Lỗi khi lấy danh sách bạn bè", error });
+        const user = await User.findOne({username}).populate({
+            path: "friends",
+            select: "name username avatar bio isOnline lastActive"
+        });
+
+        if(!user) {
+            return next(new ErrorResponse(`Không tìm thấy user với username: ${username}`, 404));
         }
-    },
+        res.status(200).json({
+            success: true,
+            count: user.friends.length,
+            data: user.friends
+        });
+    }),
 
-    sendFriendRequest: async (req, res) => {
-        try {
-            const { username } = req.params;
-            const sender = req.user;
+    getFriendRequests: asyncHandler(async (req, res, next) => {
+        const requests = await FriendRequest.find({
+            toUser: req.user.id,
+            status: "pending"
+        }).populate({
+            path: "fromUser",
+            select: "name username avatar bio"
+        });
 
-            const receiver = await User.findOne({ username });
+        res.status(200).json({
+            success: true,
+            count: requests.length,
+            data: requests
+        });
+    }),
 
-            if(!receiver) {
-                return res.status(404).json({ message: "Người dùng không tồn tại" });
-            }
+    sendFriendRequest: asyncHandler(async (req, res, next) => {
+        const { userId } = req.body;
 
-            if(receiver.friendRequests.includes(sender.id)) {
-                return res.status(400).json({ message: "Đã gửi lời mời kết bạn trước đó" });
-            }
-
-            receiver.friendRequests.push(sender.id);
-            await receiver.save();
-
-            res.status(200).json({ message: "Đã gửi lời mời kết bạn" });
-        } catch(error) {
-            res.status(500).json({ message: "Lỗi khi gửi lời mời kết bạn", error });
+        if(userId === req.user.id) {
+            return next(new ErrorResponse("Không thể gửi lời mời kết bạn cho chính mình", 400));
         }
-    },
 
-    acceptFriendRequest: async (req, res) => {
-        try {
-            const { username } = req.params;
-            const user = req.user;
-
-            const sender = await User.findOne({ username });
-
-            if(!sender) {
-                return res.status(404).json({ message: "Người dùng không tồn tại" });
-            }
-
-            if(!user.friendRequests.includes(sender.id)) {
-                return res.status(400).json({ message: "Không có lời mời từ người này" });
-            }
-
-            // Thêm bạn bè cho cả hai
-            user.friends.push(sender.id);
-            sender.friends.push(user.id);
-
-            // Xóa lời mời
-            user.friendRequests = user.friendRequests.filter(id => id !== sender.id);
-
-            await user.save();
-            await sender.save();
-
-            res.status(200).json({ message: "Đã chấp nhận lời mời kết bạn" });
-        } catch(error) {
-            res.status(500).json({ message: "Lỗi khi chấp nhận lời mời kết bạn", error });
+        const receiver = await User.findById(userId);
+        if(!receiver) {
+            return next(new ErrorResponse(`Không tìm thấy người dùng với id ${userId}`, 404));
         }
-    },
 
-    removeFriend: async (req, res) => {
-        try {
-            const { username } = req.params;
-            const user = req.user;
+        const existingRequest = await FriendRequest.findOne({
+            fromUser: req.user.id,
+            toUser: userId,
+            status: "pending"
+        });
 
-            const friend = await User.findOne({ username });
-
-            if(!friend) {
-                return res.status(404).json({ message: "Người dùng không tồn tại" });
-            }
-
-            user.friends = user.friends.filter(id => id !== friend.id);
-            friend.friends = friend.friends.filter(id => id !== user.id);
-
-            await user.save();
-            await friend.save();
-
-            res.status(200).json({ message: "Đã xóa bạn bè" });
-        } catch(error) {
-            res.status(500).json({ message: "Lỗi khi xóa bạn bè", error });
+        if(existingRequest) {
+            return next(new ErrorResponse("Bạn đã gửi lời mời kết bạn trước đó", 400));
         }
-    },
+
+        await FriendRequest.create({
+            fromUser: req.user.id,
+            toUser: userId,
+            status: "pending"
+        });
+
+        res.status(200).json({ message: "Đã gửi lời mời kết bạn" });
+    }),
+
+    acceptFriendRequest: asyncHandler(async (req, res, next) => {
+        const { id } = req.params;
+
+        const request = await FriendRequest.findOne({
+            _id: id,
+            toUser: req.user.id,
+            status: "pending"
+        });
+
+        if(!request) {
+            return next(new ErrorResponse("Lời mời kết bạn không tồn tại hoặc đã xử lý", 404));
+        }
+
+        const sender = await User.findById(request.fromUser);
+        const receiver = await User.findById(request.toUser);
+        if(receiver.friends.includes(sender.id)) {
+            return next(new ErrorResponse("Hai bạn đã là bạn bè", 400));
+        }
+        receiver.friends.push(sender.id);
+        sender.friends.push(receiver.id);
+        await request.deleteOne();
+        await receiver.save();
+        await sender.save();
+
+        res.status(200).json({ message: "Đã chấp nhận lời mời kết bạn" });
+    }),
+
+    removeFriend: asyncHandler(async (req, res, next) => {
+        const { id } = req.params;
+
+        const user = await User.findById(req.user.id);
+        const friend = await User.findById(id);
+
+        if(!friend) {
+            return next(new ErrorResponse("Người dùng không tồn tại", 404));
+        }
+        if(!user.friends.includes(friend.id)) {
+            return next(new ErrorResponse("Người này không phải bạn bè của bạn", 400));
+        }
+
+        user.friends = user.friends.filter(friendId => friendId.toString() !== friend.id.toString());
+        friend.friends = friend.friends.filter(friendId => friendId.toString() !== user.id.toString());
+
+        await user.save();
+        await friend.save();
+
+        res.status(200).json({ message: "Đã xóa bạn bè" });
+    })
 };
 
 export default controller;

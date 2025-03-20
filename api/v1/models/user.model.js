@@ -36,7 +36,18 @@ const userSchema = new mongoose.Schema({
         spotifyUrl: String,
     },
 
-})
+});
+userSchema.virtual('friendsCount').get(function () {
+    return this.friends ? this.friends.length : 0;
+});
+
+userSchema.methods.getPublicProfile = function () {
+    const userObject = this.toObject();
+    delete userObject.password;
+    delete userObject.refreshToken;
+
+    return userObject;
+};
 const User = mongoose.model('User', userSchema, 'users')
 
 export default User

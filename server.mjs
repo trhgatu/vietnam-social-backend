@@ -34,28 +34,16 @@ const startServer = async () => {
 
         clientRouter(app);
 
-        // Tạo HTTP server
         const httpServer = createServer(app);
 
-        // Khởi tạo Socket.IO
         const io = initSocket(httpServer);
 
-        // Đăng ký các sự kiện Socket.IO
         io.on('connection', (socket) => {
-            // Đăng ký các sự kiện chat
             chatEvents(io, socket);
-
-            // Đăng ký các sự kiện notification
             notificationEvents(io, socket);
-
-            // Đăng ký các sự kiện post
             postEvents(io, socket);
-
-            // Đăng ký các sự kiện friend
             friendEvents(io, socket);
         });
-
-        // Khởi động server
         httpServer.listen(port, () => {
             console.log(`Backend đang chạy trên cổng ${port}`);
         });

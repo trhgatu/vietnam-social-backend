@@ -9,21 +9,26 @@ const controller = {
             const { email, password } = req.body;
 
             const user = await User.findOne({ email });
-            if (!user) {
+            if(!user) {
                 return res.status(400).json({
                     success: false,
                     message: "Email hoặc mật khẩu không đúng",
                 });
             }
             const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
+            if(!isMatch) {
                 return res.status(400).json({
                     success: false,
                     message: "Email hoặc mật khẩu không đúng",
                 });
             }
 
-            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            const token = jwt.sign(
+                {
+                    id: user._id,
+                    email: user.email
+                },
+                process.env.JWT_SECRET, {
                 expiresIn: "7d",
             });
 
@@ -37,7 +42,6 @@ const controller = {
             return res.status(200).json({
                 success: true,
                 message: "Đăng nhập thành công",
-                token,
                 user: {
                     avatar: user.avatar,
                     email: user.email,
@@ -46,7 +50,7 @@ const controller = {
                     nickname: user.nickname,
                 },
             });
-        } catch (error) {
+        } catch(error) {
             return res.status(500).json({
                 success: false,
                 message: "Internal Server Error",
@@ -62,7 +66,7 @@ const controller = {
                 success: true,
                 message: "Đăng xuất thành công",
             });
-        } catch (error) {
+        } catch(error) {
             return res.status(500).json({
                 success: false,
                 message: "Internal Server Error",
@@ -74,7 +78,7 @@ const controller = {
     me: async (req, res) => {
         try {
             const token = req.cookies.sessionToken || req.headers.authorization?.split(" ")[1];
-            if (!token) {
+            if(!token) {
                 return res.status(401).json({
                     success: false,
                     message: "Unauthorized",
@@ -84,7 +88,7 @@ const controller = {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             const user = await User.findById(decoded.id).select("-password");
 
-            if (!user) {
+            if(!user) {
                 return res.status(404).json({
                     success: false,
                     message: "User not found",
@@ -95,7 +99,7 @@ const controller = {
                 success: true,
                 user,
             });
-        } catch (error) {
+        } catch(error) {
             return res.status(401).json({
                 success: false,
                 message: "Invalid token",
