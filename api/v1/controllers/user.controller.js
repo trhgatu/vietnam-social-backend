@@ -1,7 +1,8 @@
 import User from "../models/user.model.js";
 import { getTrackInfo } from "../services/spotify/spotifyService.js";
 import asyncHandler from "../middlewares/async.js";
-
+import ErrorResponse
+ from "../utils/errorResponse.js";
 const controller = {
     /* [GET] api/v1/users/:username */
     getUserByUsername: asyncHandler(async (req, res, next) => {
