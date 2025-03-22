@@ -7,5 +7,9 @@ router.post('/firebase-login', firebaseAuthMiddleware, controller.firebaseLogin)
 router.post('/login', controller.login);
 router.post('/logout', controller.logout);
 router.get('/me', controller.me);
+router.post("/register/send-otp", controller.sendOTP);
+router.post("/register/verify-otp", controller.verifyOTP);
+router.post("/register", controller.register);
+
 
 export default router;

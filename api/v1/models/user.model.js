@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema({
     name: {
         type: String,
         unique: true,
-        required: true
     },
     username: {
         type: String
@@ -31,6 +30,9 @@ const userSchema = new mongoose.Schema({
     nickname: {
         type: String,
     },
+    isVerified: { type: Boolean, default: false },
+    otp: { type: String },
+    otpExpires: { type: Date },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     favoriteSong: {
