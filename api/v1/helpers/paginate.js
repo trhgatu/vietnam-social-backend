@@ -1,4 +1,4 @@
-const paginate = async (model, query = {}, page = 1, limit = 10, populateFields = "") => {
+const paginate = async (model, query = {}, page = 1, limit = 10, populateFields = []) => {
     try {
         page = Math.max(1, parseInt(page));
         limit = Math.max(1, parseInt(limit));
@@ -7,21 +7,21 @@ const paginate = async (model, query = {}, page = 1, limit = 10, populateFields 
         const totalPages = Math.ceil(totalItems / limit);
         const skip = (page - 1) * limit;
 
-        const data = await model
-            .find(query)
-            .populate(populateFields)
-            .skip(skip)
-            .limit(limit)
+        let dataQuery = model.find(query)
             .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        return {
-            page,
-            limit,
-            totalItems,
-            totalPages,
-            data,
-        };
-    } catch(error) {
+        if (populateFields.length > 0) {
+            populateFields.forEach(field => {
+                dataQuery = dataQuery.populate(field);
+            });
+        }
+
+        const data = await dataQuery.exec();
+
+        return { page, limit, totalItems, totalPages, data };
+    } catch (error) {
         throw new Error("Lỗi khi phân trang: " + error.message);
     }
 };

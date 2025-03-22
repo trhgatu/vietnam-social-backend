@@ -1,17 +1,11 @@
 import { mongoose } from "../../../config/database.js";
-import { v4 as uuidv4 } from 'uuid';
 
 const postSchema = new mongoose.Schema(
     {
-        id: {
-            type: String,
-            default: uuidv4,
-            unique: true,
-        },
         authorId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: false
+            required: true
         },
         content: {
             type: String,

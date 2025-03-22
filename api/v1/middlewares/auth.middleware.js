@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 export const authMiddleware = (req, res, next) => {
-    let token = req?.cookies?.sessionToken;
+    let token = req?.cookies?.accessToken;
 
     if (!token && req.headers.authorization) {
         token = req.headers.authorization.split(" ")[1];

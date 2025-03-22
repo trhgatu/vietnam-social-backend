@@ -13,7 +13,7 @@ const controller = {
             const { email, password } = req.body;
             const user = await User.findOne({ email });
 
-            if (!user) {
+            if(!user) {
                 return res.status(400).json({
                     success: false,
                     message: "Email hoặc mật khẩu không đúng",
@@ -21,7 +21,7 @@ const controller = {
             }
 
             const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
+            if(!isMatch) {
                 return res.status(400).json({
                     success: false,
                     message: "Email hoặc mật khẩu không đúng",
@@ -29,6 +29,14 @@ const controller = {
             }
 
             const { accessToken, refreshToken } = generateTokens(user);
+
+            res.cookie("accessToken", accessToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                maxAge: 15 * 60 * 1000,
+            });
+
             res.cookie("refreshToken", refreshToken, {
                 httpOnly: true,
                 secure: true,
@@ -48,7 +56,7 @@ const controller = {
                     nickname: user.nickname,
                 },
             });
-        } catch (error) {
+        } catch(error) {
             return res.status(500).json({
                 success: false,
                 message: "Internal Server Error",
@@ -69,7 +77,7 @@ const controller = {
             });
 
             res.json({ success: true, accessToken, user });
-        } catch (error) {
+        } catch(error) {
             console.error("Firebase Login Error:", error);
             res.status(500).json({ message: "Internal server error" });
         }
@@ -83,7 +91,7 @@ const controller = {
                 success: true,
                 message: "Đăng xuất thành công",
             });
-        } catch (error) {
+        } catch(error) {
             return res.status(500).json({
                 success: false,
                 message: "Internal Server Error",
@@ -95,7 +103,7 @@ const controller = {
     me: async (req, res) => {
         try {
             const token = req.headers.authorization?.split(" ")[1];
-            if (!token) {
+            if(!token) {
                 return res.status(401).json({
                     success: false,
                     message: "Unauthorized",
@@ -105,7 +113,7 @@ const controller = {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             const user = await User.findById(decoded.id).select("-password");
 
-            if (!user) {
+            if(!user) {
                 return res.status(404).json({
                     success: false,
                     message: "User not found",
@@ -116,7 +124,7 @@ const controller = {
                 success: true,
                 user,
             });
-        } catch (error) {
+        } catch(error) {
             return res.status(401).json({
                 success: false,
                 message: "Invalid token",
@@ -128,17 +136,17 @@ const controller = {
     refreshToken: async (req, res) => {
         try {
             const refreshToken = req.cookies.refreshToken;
-            if (!refreshToken) {
+            if(!refreshToken) {
                 return res.status(401).json({ success: false, message: "Unauthorized" });
             }
 
             jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async (err, decoded) => {
-                if (err) {
+                if(err) {
                     return res.status(403).json({ success: false, message: "Invalid refresh token" });
                 }
 
                 const user = await User.findById(decoded.id);
-                if (!user) {
+                if(!user) {
                     return res.status(404).json({ success: false, message: "User not found" });
                 }
 
@@ -153,7 +161,7 @@ const controller = {
 
                 return res.status(200).json({ success: true, accessToken });
             });
-        } catch (error) {
+        } catch(error) {
             return res.status(500).json({ success: false, message: "Internal Server Error" });
         }
     },
@@ -163,11 +171,11 @@ const controller = {
             const { email } = req.body;
             let user = await User.findOne({ email });
 
-            if (user && user.isVerified) {
-                return res.status(400).json({ success: false, message: "Email đã được xác minh" });
-            }
-
-            if (!user) {
+            if(user) {
+                if(user.isVerified) {
+                    return res.status(400).json({ success: false, message: "Email đã được đăng ký và xác minh, vui lòng đăng nhập" });
+                }
+            } else {
                 user = new User({ email, isVerified: false });
             }
 
@@ -175,26 +183,26 @@ const controller = {
             user.otp = otp;
             user.otpExpires = Date.now() + 5 * 60 * 1000;
             await user.save();
-
             await sendOTPEmail(email, otp);
 
             return res.status(200).json({ success: true, message: "OTP đã được gửi đến email của bạn" });
-        } catch (error) {
+        } catch(error) {
             console.error("Lỗi khi gửi OTP:", error);
             return res.status(500).json({ success: false, message: "Lỗi khi gửi OTP" });
         }
     },
+
     /* [POST] api/v1/auth/register/verify-otp */
     verifyOTP: async (req, res) => {
         try {
             const { email, otp } = req.body;
             const user = await User.findOne({ email });
 
-            if (!user || !user.otp || user.otpExpires < Date.now()) {
+            if(!user || !user.otp || user.otpExpires < Date.now()) {
                 return res.status(400).json({ success: false, message: "OTP không hợp lệ hoặc đã hết hạn" });
             }
 
-            if (user.otp !== otp) {
+            if(user.otp !== otp) {
                 return res.status(400).json({ success: false, message: "OTP không đúng" });
             }
 
@@ -204,7 +212,7 @@ const controller = {
             await user.save();
 
             return res.status(200).json({ success: true, message: "OTP hợp lệ, bạn có thể tiếp tục đăng ký" });
-        } catch (error) {
+        } catch(error) {
             return res.status(500).json({ success: false, message: "Lỗi xác minh OTP" });
         }
     },
@@ -215,11 +223,11 @@ const controller = {
             const { email, name, password } = req.body;
             const user = await User.findOne({ email });
 
-            if (!user || !user.isVerified) {
+            if(!user || !user.isVerified) {
                 return res.status(400).json({ success: false, message: "Email chưa xác thực OTP" });
             }
 
-            if (user.password) {
+            if(user.password) {
                 return res.status(400).json({ success: false, message: "Tài khoản đã tồn tại" });
             }
 
@@ -231,7 +239,7 @@ const controller = {
             await user.save();
 
             return res.status(201).json({ success: true, message: "Đăng ký thành công", username });
-        } catch (error) {
+        } catch(error) {
             console.error("Lỗi đăng ký:", error);
             return res.status(500).json({ success: false, message: "Lỗi đăng ký" });
         }

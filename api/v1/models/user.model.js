@@ -34,7 +34,6 @@ const userSchema = new mongoose.Schema({
     otp: { type: String },
     otpExpires: { type: Date },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     favoriteSong: {
         trackId: String,
         title: String,

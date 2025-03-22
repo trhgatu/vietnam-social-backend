@@ -1,17 +1,38 @@
 import Post from "../models/post.model.js";
+import Reaction from "../models/reaction.model.js";
+import Comment from "../models/comment.model.js";
 import paginate from "../helpers/paginate.js";
+import { getFriendIds } from "../utils/friends.js";
 import { getGenericFields } from "../utils/generic-fields.js";
 
 const controller = {
     /* [GET] api/v1/posts */
     index: async (req, res) => {
         try {
-            const { page, limit } = req.query;
+            const { page = 1, limit = 10 } = req.query;
+            const userId = req.user?.id;
+            let query = { isDel: false };
 
-            const result = await paginate(Post, {}, page, limit, "authorId");
+            if(userId) {
+                const friendIds = await getFriendIds(userId);
+                query.$or = [
+                    { status: "public" },
+                    { status: "friends", authorId: { $in: friendIds } },
+                    { authorId: userId }
+                ];
+            } else {
+                query.status = "public";
+            }
+
+            const result = await paginate(Post, query, page, limit, [
+                { path: "authorId", select: "name avatar" },
+                { path: "reactions", select: "userId type" },
+                { path: "comments", select: "_id" }
+            ]);
 
             res.status(200).json(result);
         } catch(error) {
+            console.error("Lỗi khi lấy danh sách bài viết:", error);
             res.status(500).json({ message: "Lỗi khi lấy danh sách bài viết", error });
         }
     },

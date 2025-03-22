@@ -3,9 +3,8 @@ import authRoutes from "./auth.route.js";
 import aiRoutes from "./ai.route.js";
 import userRoutes from "./user.route.js"
 import spotifyRoutes from './spotify.route.js'
-import friendRoutes from './friend.route.js'
+import friendShipRoutes from './friendship.route.js'
 
-import { authMiddleware } from "../../middlewares/auth.middleware.js";
 const clientRouter = (app) => {
     const version = "/api/v1";
     app.use(version + "/posts", postRoutes);
@@ -13,7 +12,7 @@ const clientRouter = (app) => {
     app.use(version + "/ai", aiRoutes);
     app.use(version + "/users", userRoutes);
     app.use(version + "/spotify", spotifyRoutes)
-    app.use(version + "/friends", friendRoutes)
+    app.use(version + "/friends", friendShipRoutes)
 };
 
 export default clientRouter;
