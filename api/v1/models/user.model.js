@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema({
     nickname: {
         type: String,
     },
+    refreshTokens: [String],
     isVerified: { type: Boolean, default: false },
     otp: { type: String },
     otpExpires: { type: Date },
