@@ -48,13 +48,7 @@ const controller = {
                 success: true,
                 message: "Đăng nhập thành công",
                 accessToken,
-                user: {
-                    avatar: user.avatar,
-                    email: user.email,
-                    name: user.name,
-                    coverPhoto: user.coverPhoto,
-                    nickname: user.nickname,
-                },
+                user
             });
         } catch(error) {
             return res.status(500).json({
@@ -69,6 +63,12 @@ const controller = {
         try {
             const user = req.user;
             const { accessToken, refreshToken } = generateTokens(user);
+            res.cookie("accessToken", accessToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                maxAge: 15 * 60 * 1000,
+            });
             res.cookie("refreshToken", refreshToken, {
                 httpOnly: true,
                 secure: true,
@@ -87,6 +87,7 @@ const controller = {
     logout: async (req, res) => {
         try {
             res.clearCookie("refreshToken");
+            res.clearCookie("accessToken");
             return res.status(200).json({
                 success: true,
                 message: "Đăng xuất thành công",
@@ -132,7 +133,7 @@ const controller = {
         }
     },
 
-    /* [POST] api/v1/auth/refresh */
+    /* [POST] api/v1/auth/refresh-token */
     refreshToken: async (req, res) => {
         try {
             const refreshToken = req.cookies.refreshToken;
@@ -140,29 +141,27 @@ const controller = {
                 return res.status(401).json({ success: false, message: "Unauthorized" });
             }
 
-            jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async (err, decoded) => {
-                if(err) {
-                    return res.status(403).json({ success: false, message: "Invalid refresh token" });
-                }
+            const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+            const user = await User.findById(decoded.id);
 
-                const user = await User.findById(decoded.id);
-                if(!user) {
-                    return res.status(404).json({ success: false, message: "User not found" });
-                }
+            if(!user) {
+                res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "none" });
+                return res.status(404).json({ success: false, message: "User not found" });
+            }
 
-                const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+            const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
 
-                res.cookie("refreshToken", newRefreshToken, {
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: "none",
-                    maxAge: 7 * 24 * 60 * 60 * 1000,
-                });
-
-                return res.status(200).json({ success: true, accessToken });
+            res.cookie("refreshToken", newRefreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none",
+                maxAge: 7 * 24 * 60 * 60 * 1000,
             });
+
+            return res.status(200).json({ success: true, accessToken });
         } catch(error) {
-            return res.status(500).json({ success: false, message: "Internal Server Error" });
+            res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "none" });
+            return res.status(403).json({ success: false, message: "Invalid refresh token" });
         }
     },
     /* [POST] api/v1/auth/register/send-otp */

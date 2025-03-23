@@ -6,6 +6,7 @@ const router = express.Router();
 router.post('/firebase-login', firebaseAuthMiddleware, controller.firebaseLogin);
 router.post('/login', controller.login);
 router.post('/logout', controller.logout);
+router.post('/refresh-token', controller.refreshToken);
 router.get('/me', controller.me);
 router.post("/register/send-otp", controller.sendOTP);
 router.post("/register/verify-otp", controller.verifyOTP);
