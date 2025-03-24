@@ -12,12 +12,14 @@ const controller = {
             return next(new ErrorResponse("Không thể gửi lời mời kết bạn cho chính mình!", 400));
         }
         const existingRequest = await Friendship.findOne({
-            requester: requesterId,
-            recipient: recipientId,
+            $or: [
+                { requester: requesterId, recipient: recipientId },
+                { requester: recipientId, recipient: requesterId }
+            ]
         });
 
         if (existingRequest) {
-            return next(new ErrorResponse("Bạn đã gửi lời mời trước đó!", 400));
+            return next(new ErrorResponse("Bạn đã gửi lời mời trước đó hoặc đã là bạn bè!", 400));
         }
         const newRequest = new Friendship({
             requester: requesterId,
@@ -53,41 +55,6 @@ const controller = {
         await Friendship.findByIdAndDelete(requestId);
 
         res.status(200).json({ success: true, message: "Lời mời đã bị từ chối hoặc bạn đã hủy kết bạn!" });
-    }),
-    index: asyncHandler(async (req, res, next) => {
-        let user;
-
-        // Kiểm tra xem có query `username` hay không
-        if (req.query.username) {
-            user = await User.findOne({ username: req.query.username });
-
-            if (!user) {
-                return next(new ErrorResponse(`Không tìm thấy user với username: ${req.query.username}`, 404));
-            }
-        } else {
-            // Nếu không có username thì lấy user đang đăng nhập
-            user = req.user;
-        }
-
-        // Lấy danh sách bạn bè từ bảng Friendship
-        const friendships = await Friendship.find({
-            $or: [{ requester: user.id }, { recipient: user.id }],
-            status: "accepted"
-        }).select("requester recipient");
-
-        // Lọc ra danh sách bạn bè (tránh user tự nhận bạn với chính mình)
-        const friendIds = friendships.map(f =>
-            f.requester.toString() === user.id ? f.recipient.toString() : f.requester.toString()
-        );
-
-        const friends = await User.find({ _id: { $in: friendIds } })
-            .select("name username avatar isOnline lastActive");
-
-        res.status(200).json({
-            success: true,
-            count: friends.length,
-            data: friends
-        });
     }),
     getReceivedFriendRequests: asyncHandler(async (req, res, next) => {
         const userId = req.user.id;
