@@ -46,6 +46,7 @@ const controller = {
             }
             const posts = await Post.find({ authorId: user._id })
                 .populate('authorId', 'name username avatar')
+                .sort({ createdAt: -1 })
 
             if(!posts.length) {
                 return res.status(404).json({ message: 'No posts found for this user' });
@@ -116,7 +117,7 @@ const controller = {
     },
 
     /* [DELETE] api/v1/posts/:id */
-    delete: async (req, res) => {
+    deletePost: async (req, res) => {
         try {
             const { id } = req.params;
 
